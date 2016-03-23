@@ -1,5 +1,6 @@
 library(caret)
 library(plyr)
+library(doMC)
 #Loading data
 traind <- as.matrix(read.table('train.csv', sep = ',', header = TRUE, stringsAsFactors = FALSE))
 
@@ -111,19 +112,21 @@ trainTransformed <- predict(preProcValues, training)
 testTransformed <- predict(preProcValues, test)
 
 #Model: 
+registerDoMC(10)
 fitControl <- trainControl(## 10-fold CV
                         method = "repeatedcv",
                         number = 10,
                         ## repeated ten times
-                        repeats = 10,
+                        #repeats = 10,
                         classProbs = TRUE)
 set.seed(343)
 Fit <- train(label~.,
           data = trainTransformed,
-          method = 'gbm',
+          method = 'rf',
           metric = 'ROC',
           trControl = fitControl,
-          verbose = TRUE)
+          verbose = TRUE,
+          allowParallel = TRUE)
 
 prFit <- predict(Fit, testTransformed)
 confusionMatrix(testTransformed$label,prFit)
